@@ -1,0 +1,80 @@
+* Go axiom: Don't communicate by sharing memory; share memory by communicating. (R. Pike)
+
+* concurrency is time sharing - how a program works.
+
+* when sync.Mutex .Lock() function is called:
+one of the goroutines arrives at acct.Lock(), attempts to lock the mutex, and succeeds.
+If any other goroutine arrives at the same point, their attempts to lock the mutex will be blocked until the first goroutine unlocks it.
+The first goroutine, now that it has entered the critical section successfully, completes the function and unlocks the mutex.
+The unlocking operation enables all the other goroutines that are waiting for it to become unlocked.
+One of the waiting goroutines is randomly selected, so it locks the mutex and takes its turn running the critical section.
+The mutex implementation contains a memory barrier, so all the modifications that are performed by the first goroutine are visible to the second goroutine.
+
+* Defn: A deadlock is a situation in which every member of a group of objects is waiting on objects in the same group to release a lock
+
+* Defn: A livelock, the states of the processes involved in a live lock scenario constantly change.
++ On the other hand, the processes still depend on each other and can never finish their tasks.
+
+* Defn: Starvation is an outcome of a process that is unable to gain regular access to the shared resources
++ it requires to complete a task and thus, unable to make any progress.
+
+* Channels allow goroutines to share memory by communicating, as opposed to communicating by sharing memory
+
+* keep in mind that channels are two things combined together: they are synchronization tools, and they are conduits for data.
+
+* A channel is a first-in, first-out (FIFO) conduit.
+
+* The len() function will return the number of items waiting in the channel, and cap() will return the capacity of the channel buffer.
+
+* A channel is actually a pointer to a data structure that contains its internal state, so the zero-value of a channel variable is nil.
+
+* channels must be initialized using the make keyword.
+
+* Such a channel is called an unbuffered channel, and behaves in the same way as a buffered channel, but with len(ch)=0 and cap(ch)=0.
+Thus, a send operation will block until another goroutine receives from it.
+A receive operation will block until another goroutine sends to it.
+In other words, an unbuffered channel is a way to transfer data between goroutines atomically
+
+*  channel can be declared with a direction. Such channels are useful as function arguments, or as function return values:
+
+  var receiveOnly <-chan int // Can receive, cannot
+                             // write or close
+  var sendOnly chan<- int    // Can send, cannot read
+                             // or close
+
+* Mutex is short for mutual exclusion. It is a synchronization mechanism to ensure that only one goroutine can enter a critical section while others are waiting.
+
+* A wait group waits for a collection of things, usually goroutines, to finish. It is essentially a thread-safe counter that allows you to wait until the counter reaches zero.
+ + Add must be called before the program has a chance to run Wait.
+ + Done must be called eventually. The safest way to do it is to use a defer statement inside the goroutine
+
+* A condition variable supports three operations, as follows:
+
+  Wait: Blocks the current goroutine until a condition happens
+  Signal: Wakes up one of the waiting goroutines when the condition happens
+  Broadcast: Wakes up all of the waiting goroutines when the condition happens
+Unlike the other concurrency primitives, a condition variable needs a mutex. The mutex is used to lock the critical sections in the goroutines that modify the condition.
+
+* a channel quite accurately models “transferring goods between parties.”
++ By using channels with different capacities and adjusting the number of producers and consumers, you can fine-tune the behavior of the system for a particular load pattern.
++ Keep in mind that such tuning and optimization activities should be performed only after you have a working implementation, and only after you measure the baseline behavior.
++ Never attempt to optimize a program before observing how it runs. Make it run first, then you can make it good.
+
+Dining Philospohers problem
+* entering the critical section may require the acquisition of multiple resources (mutexes).
+* Any time you have a critical section that relies on multiple mutexes, you have a chance of deadlock and starvation.
+
+* Analyzing an algorithm for deadlock comes down to finding where the goroutines can block.
+
+* There is a publicly available rate limiter package, golang.org/x/time/rate
++ For production use cases, use that package as it provides a much richer API and context support.
++ Context support is necessary because, as you can see, our rate limiter continues waiting even if the requestor cancels the request.
+
+* If a channel is closed, you can no longer send data on it, but you can still read data from it.
+
+* Pipelines:
+* Start simple, profile your programs, find the bottlenecks, and then you can decide if and when to fan out, how to fan in,
++ how to size worker pools, and what type of pipeline works best for your use case.
+
+
+
